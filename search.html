@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Avalon Public Records Terminal</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<nav class="topnav">
+  <span class="brand">AVALON ARCHIVE</span>
+  <a href="index.html">Case File</a>
+  <a href="search.html" class="current">Search Terminal</a>
+</nav>
+<div class="desk">
+  <div class="terminal">
+    <div class="search-shell">
+      <div class="search-title">AVALON PUBLIC RECORDS TERMINAL</div>
+      <div class="search-sub">Digitised civic archive &mdash; historical societies, road registers &amp; survey filings</div>
+
+      <div class="search-row">
+        <input id="q" type="text" placeholder="Search names, places, dates…" autocomplete="off">
+        <button id="go">Search</button>
+      </div>
+
+      <div class="results" id="results">
+        <div class="result-count">Enter a search term above. Try a name, a place, or a document reference.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* A small closed corpus — this terminal only ever "knows" about
+   the documents listed below. Nothing here calls the real internet. */
+const INDEX = [
+  {
+    keywords: ["elias vale", "eastern road survey", "archivist", "vale survey"],
+    title: "Eastern Road Survey, 1998 — Avalon Historical Society Archive",
+    url: "archive.html",
+    snippet: "Digitised survey register for the eastern road network. Filed surveys from 1996–1999, including an entry for Elias Vale, 17 April 1998.",
+    domain: "archive.avalon-hs.gov.av"
+  },
+  {
+    keywords: ["elias vale"],
+    title: "Vale Family Genealogy Forum — \"Elias Vale, b. 1922, Millhaven\"",
+    url: "#",
+    snippet: "Discussion thread regarding a 20th-century farmer named Elias Vale in the western parish of Millhaven. No connection to the royal archive found.",
+    domain: "forums.parishrecords.example",
+    dead: true
+  },
+  {
+    keywords: ["northwatch road", "northwatch"],
+    title: "NORTHWATCH ROAD — Avalon Road & Heritage Register",
+    url: "roads.html",
+    snippet: "Heritage listing for Northwatch Road, established 1847. Includes route history and a list of survey filings through 1998.",
+    domain: "register.avalon-heritage.gov.av"
+  },
+  {
+    keywords: ["eastmere road", "eastmere"],
+    title: "EASTMERE ROAD — Avalon Road & Heritage Register",
+    url: "eastmere.html",
+    snippet: "Heritage listing for Eastmere Road. No survey filings recorded after 1994.",
+    domain: "register.avalon-heritage.gov.av"
+  },
+  {
+    keywords: ["blackstone hill", "mile 7", "blackstone", "eh-071", "field record"],
+    title: "Field Record #EH-071 — Blackstone Hill, Mile 7",
+    url: "records.html",
+    snippet: "Surveyor's field record for the Blackstone Hill marker at mile 7, filed 17 April 1998. Final note attached.",
+    domain: "archive.avalon-hs.gov.av"
+  },
+  {
+    keywords: ["blackstone road"],
+    title: "BLACKSTONE ROAD — Avalon Road & Heritage Register",
+    url: "#",
+    snippet: "Heritage listing for Blackstone Road, a residential street in the Lower Ward. No relation to Blackstone Hill.",
+    domain: "register.avalon-heritage.gov.av",
+    dead: true
+  },
+  {
+    keywords: ["thomas reed", "marcus bell", "daniel cross"],
+    title: "Eastern Road Survey Personnel Roster, 1994–1999",
+    url: "#",
+    snippet: "Staff roster for the eastern survey office. Lists surveyors employed across the listed years.",
+    domain: "archive.avalon-hs.gov.av",
+    dead: true
+  }
+];
+
+const qEl = document.getElementById('q');
+const goEl = document.getElementById('go');
+const resultsEl = document.getElementById('results');
+
+function norm(s){ return s.toLowerCase().trim().replace(/\s+/g, ' '); }
+
+function escapeHtml(s){
+  return s.replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+
+function escapeRegex(s){
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/* Flavor text for dead-end searches — the terminal doesn't just say
+   "not found," it stays in character. One is picked at random. */
+const NO_RESULTS_FLAVOR = [
+  "The clerks have searched the index and found nothing under that name. Not every thread leads back to the archive.",
+  "No record. Some names pass through Avalon and leave no paper behind them — that, too, is a kind of record.",
+  "The ledger is silent on this one. Perhaps it was never written down. Perhaps it was, and someone made sure it wouldn't be found.",
+  "Nothing filed under that. The terminal only knows what was thought worth keeping — and not everything was.",
+  "No matching entries. The archive remembers roads, dates, and the names beneath them. Try one of those."
+];
+
+function noResultsMessage(query){
+  const flavor = NO_RESULTS_FLAVOR[Math.floor(Math.random() * NO_RESULTS_FLAVOR.length)];
+  return `<div class="result-count">No records found for &ldquo;${escapeHtml(query)}&rdquo;.</div>
+          <div class="result-count" style="font-style:italic; border-top:none; margin-top:2px; padding-top:0;">${flavor}</div>`;
+}
+
+function matches(entry, query){
+  const q = query.trim();
+  if(q.length < 3) return false; // too short to mean anything — avoids accidental letter overlaps
+  return entry.keywords.some(k => {
+    // query is a longer phrase that contains the full keyword
+    if(q.includes(k)) return true;
+    // keyword contains the query as a whole word/phrase (word-boundary, not a raw substring)
+    const re = new RegExp('(^|[^a-z0-9])' + escapeRegex(q) + '($|[^a-z0-9])', 'i');
+    return re.test(k);
+  });
+}
+
+function search(){
+  const raw = norm(qEl.value);
+  resultsEl.innerHTML = "";
+
+  if(!raw){
+    resultsEl.innerHTML = '<div class="result-count">Enter a search term above. Try a name, a place, or a document reference.</div>';
+    return;
+  }
+
+  const hits = INDEX.filter(entry => matches(entry, raw));
+
+  if(hits.length === 0){
+    resultsEl.innerHTML = noResultsMessage(qEl.value);
+    return;
+  }
+
+  hits.forEach(hit => {
+    const div = document.createElement('div');
+    div.className = 'result';
+    const link = hit.dead ? '#' : hit.url;
+    div.innerHTML = `
+      <div class="result-url">${hit.domain}</div>
+      <div class="result-title"><a href="${link}" ${hit.dead ? 'data-dead="1"' : 'target="_blank" rel="noopener"'}>${hit.title}</a></div>
+      <div class="result-snip">${hit.snippet}</div>
+      ${hit.dead ? '<div class="dead-note">This record could not be retrieved.</div>' : ''}
+    `;
+    resultsEl.appendChild(div);
+  });
+
+  resultsEl.innerHTML += `<div class="result-count">${hits.length} record${hits.length===1?'':'s'} found.</div>`;
+
+  resultsEl.querySelectorAll('a[data-dead]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      alert("This record could not be retrieved. It may have been removed, misfiled, or never existed under this name.");
+    });
+  });
+}
+
+goEl.addEventListener('click', search);
+qEl.addEventListener('keydown', e => { if(e.key === 'Enter') search(); });
+</script>
+</body>
+</html>
