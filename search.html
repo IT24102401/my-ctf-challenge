@@ -2,29 +2,32 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Avalon Public Records Terminal</title>
+<title>Avalon Recon Terminal</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<div class="scene-bg"></div>
+<div class="mist"></div>
+<canvas id="fireflies"></canvas>
 <nav class="topnav">
-  <span class="brand">AVALON ARCHIVE</span>
+  <span class="brand">AVALON RECON</span>
   <a href="index.html">Case File</a>
   <a href="search.html" class="current">Search Terminal</a>
 </nav>
 <div class="desk">
   <div class="terminal">
     <div class="search-shell">
-      <div class="search-title">AVALON PUBLIC RECORDS TERMINAL</div>
-      <div class="search-sub">Digitised civic archive &mdash; historical societies, road registers &amp; survey filings</div>
+      <div class="search-title">AVALON RECON TERMINAL</div>
+      <div class="search-sub">Cross-references leaked handles, cached profiles & archived pages</div>
 
       <div class="search-row">
-        <input id="q" type="text" placeholder="Search names, places, dates…" autocomplete="off">
+        <input id="q" type="text" placeholder="Search a handle, alias, or fragment…" autocomplete="off">
         <button id="go">Search</button>
       </div>
 
       <div class="results" id="results">
-        <div class="result-count">Enter a search term above. Try a name, a place, or a document reference.</div>
+        <div class="result-count">Enter a handle or alias above. Start with what you already have.</div>
       </div>
     </div>
   </div>
@@ -32,59 +35,46 @@
 
 <script>
 /* A small closed corpus — this terminal only ever "knows" about
-   the documents listed below. Nothing here calls the real internet. */
+   the fragments listed below. Nothing here calls the real internet. */
 const INDEX = [
   {
-    keywords: ["elias vale", "eastern road survey", "archivist", "vale survey"],
-    title: "Eastern Road Survey, 1998 — Avalon Historical Society Archive",
-    url: "archive.html",
-    snippet: "Digitised survey register for the eastern road network. Filed surveys from 1996–1999, including an entry for Elias Vale, 17 April 1998.",
-    domain: "archive.avalon-hs.gov.av"
+    keywords: ["vale_e77"],
+    title: "Credential dump — fragment #0417",
+    url: "leak.html",
+    snippet: "Cached mirror of a leaked credential dump. One row matches this alias, with a partially redacted contact field.",
+    domain: "dump.paste-mirror.example"
   },
   {
     keywords: ["elias vale"],
-    title: "Vale Family Genealogy Forum — \"Elias Vale, b. 1922, Millhaven\"",
+    title: "Old forum thread — \"anyone know an Elias Vale?\"",
     url: "#",
-    snippet: "Discussion thread regarding a 20th-century farmer named Elias Vale in the western parish of Millhaven. No connection to the royal archive found.",
-    domain: "forums.parishrecords.example",
+    snippet: "General discussion thread from an unrelated forum. No connection found to the alias vale_e77.",
+    domain: "forums.example",
     dead: true
   },
   {
-    keywords: ["northwatch road", "northwatch"],
-    title: "NORTHWATCH ROAD — Avalon Road & Heritage Register",
-    url: "roads.html",
-    snippet: "Heritage listing for Northwatch Road, established 1847. Includes route history and a list of survey filings through 1998.",
-    domain: "register.avalon-heritage.gov.av"
+    keywords: ["e.sveyne_arch", "sveyne_arch", "e sveyne arch"],
+    title: "Cached member profile — e.sveyne_arch",
+    url: "profile.html",
+    snippet: "Archived forum profile, last active 2021. Signature line references a current handle.",
+    domain: "forums.oldnet.example",
+    restricted: true
   },
   {
-    keywords: ["eastmere road", "eastmere"],
-    title: "EASTMERE ROAD — Avalon Road & Heritage Register",
-    url: "eastmere.html",
-    snippet: "Heritage listing for Eastmere Road. No survey filings recorded after 1994.",
-    domain: "register.avalon-heritage.gov.av"
-  },
-  {
-    keywords: ["blackstone hill", "mile 7", "blackstone", "eh-071", "field record"],
-    title: "Field Record #EH-071 — Blackstone Hill, Mile 7",
-    url: "records.html",
-    snippet: "Surveyor's field record for the Blackstone Hill marker at mile 7, filed 17 April 1998. Final note attached.",
-    domain: "archive.avalon-hs.gov.av"
-  },
-  {
-    keywords: ["blackstone road"],
-    title: "BLACKSTONE ROAD — Avalon Road & Heritage Register",
+    keywords: ["sveyne"],
+    title: "Surname index — Sveyne",
     url: "#",
-    snippet: "Heritage listing for Blackstone Road, a residential street in the Lower Ward. No relation to Blackstone Hill.",
-    domain: "register.avalon-heritage.gov.av",
+    snippet: "Regional surname index. Too broad on its own to narrow down a specific person.",
+    domain: "genealogy.example",
     dead: true
   },
   {
-    keywords: ["thomas reed", "marcus bell", "daniel cross"],
-    title: "Eastern Road Survey Personnel Roster, 1994–1999",
-    url: "#",
-    snippet: "Staff roster for the eastern survey office. Lists surveyors employed across the listed years.",
-    domain: "archive.avalon-hs.gov.av",
-    dead: true
+    keywords: ["elian.sveyne", "elian sveyne"],
+    title: "Cached link page — elian.sveyne",
+    url: "final.html",
+    snippet: "Archived snapshot of a link-in-bio style page. One of its links still resolves.",
+    domain: "links.mirror.example",
+    restricted: true
   }
 ];
 
@@ -104,14 +94,11 @@ function escapeRegex(s){
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-/* Flavor text for dead-end searches — the terminal doesn't just say
-   "not found," it stays in character. One is picked at random. */
 const NO_RESULTS_FLAVOR = [
-  "The clerks have searched the index and found nothing under that name. Not every thread leads back to the archive.",
-  "No record. Some names pass through Avalon and leave no paper behind them — that, too, is a kind of record.",
-  "The ledger is silent on this one. Perhaps it was never written down. Perhaps it was, and someone made sure it wouldn't be found.",
-  "Nothing filed under that. The terminal only knows what was thought worth keeping — and not everything was.",
-  "No matching entries. The archive remembers roads, dates, and the names beneath them. Try one of those."
+  "No matching rows in this index. Not every handle leaves a paper trail.",
+  "Nothing cached under that. It may never have been indexed, or it was and someone made sure it wouldn't be found.",
+  "No hits. The terminal only surfaces what search engines happened to cache — not everything gets cached.",
+  "No matching entries. Try the exact alias, not a guess at the name behind it."
 ];
 
 function noResultsMessage(query){
@@ -122,11 +109,9 @@ function noResultsMessage(query){
 
 function matches(entry, query){
   const q = query.trim();
-  if(q.length < 3) return false; // too short to mean anything — avoids accidental letter overlaps
+  if(q.length < 3) return false;
   return entry.keywords.some(k => {
-    // query is a longer phrase that contains the full keyword
     if(q.includes(k)) return true;
-    // keyword contains the query as a whole word/phrase (word-boundary, not a raw substring)
     const re = new RegExp('(^|[^a-z0-9])' + escapeRegex(q) + '($|[^a-z0-9])', 'i');
     return re.test(k);
   });
@@ -137,7 +122,7 @@ function search(){
   resultsEl.innerHTML = "";
 
   if(!raw){
-    resultsEl.innerHTML = '<div class="result-count">Enter a search term above. Try a name, a place, or a document reference.</div>';
+    resultsEl.innerHTML = '<div class="result-count">Enter a handle or alias above. Start with what you already have.</div>';
     return;
   }
 
@@ -150,11 +135,11 @@ function search(){
 
   hits.forEach(hit => {
     const div = document.createElement('div');
-    div.className = 'result';
+    div.className = 'result' + (hit.restricted ? ' restricted' : '');
     const link = hit.dead ? '#' : hit.url;
     div.innerHTML = `
       <div class="result-url">${hit.domain}</div>
-      <div class="result-title"><a href="${link}" ${hit.dead ? 'data-dead="1"' : 'target="_blank" rel="noopener"'}>${hit.title}</a></div>
+      <div class="result-title"><a href="${link}" ${hit.dead ? 'data-dead="1"' : 'target="_self"'}>${hit.title}</a></div>
       <div class="result-snip">${hit.snippet}</div>
       ${hit.dead ? '<div class="dead-note">This record could not be retrieved.</div>' : ''}
     `;
@@ -174,5 +159,6 @@ function search(){
 goEl.addEventListener('click', search);
 qEl.addEventListener('keydown', e => { if(e.key === 'Enter') search(); });
 </script>
+<script src="js/fireflies.js"></script>
 </body>
 </html>

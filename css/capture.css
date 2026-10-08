@@ -1,0 +1,159 @@
+/* ============================================================
+   CAPTURE PAGES — deliberately plain. These are not part of the
+   archive's world. They are supposed to look like real, scraped
+   web pages: leak dumps, cached profiles, cached link pages.
+   ============================================================ */
+
+*{ box-sizing: border-box; }
+
+html,body{
+  margin:0; padding:0;
+  min-height:100vh;
+  background: #cfcfcf;
+  font-family: Arial, Helvetica, sans-serif;
+  color: #1a1a1a;
+}
+
+.cache-bar{
+  background: #3a3a3a;
+  color: #d8d8d8;
+  font-family: monospace;
+  font-size: 12.5px;
+  padding: 8px 16px;
+  display:flex;
+  justify-content:space-between;
+  gap: 12px;
+  border-bottom: 3px solid #222;
+  flex-wrap: wrap;
+}
+.cache-bar .tool{ color: #9fd8b0; }
+.cache-bar a{ color: #9fc8ff; text-decoration:none; }
+.cache-bar a:hover{ text-decoration:underline; }
+
+.capture-wrap{
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 30px 20px 70px;
+}
+
+/* ---------- leak dump look ---------- */
+.dump-shell{
+  background: #111;
+  color: #8fe28f;
+  font-family: monospace;
+  font-size: 13.5px;
+  line-height: 1.6;
+  padding: 22px 20px;
+  border: 1px solid #333;
+  overflow-x: auto;
+}
+.dump-shell .dim{ color: #5c8f5c; }
+.dump-shell .row{ padding: 3px 0; white-space: pre; }
+.dump-shell .row.hit{
+  background: rgba(255,255,255,0.06);
+  color: #d7f5d7;
+}
+.dump-note{
+  margin-top: 16px;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  color: #444;
+}
+
+/* ---------- old forum profile look ---------- */
+.forum-card{
+  background: #f2f0e8;
+  border: 1px solid #b8b4a4;
+  padding: 0;
+}
+.forum-head{
+  background: #5a6b7a;
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 15px;
+  font-weight: bold;
+}
+.forum-body{
+  display:flex;
+  gap: 20px;
+  padding: 20px;
+}
+.forum-avatar{
+  width: 64px; height: 64px;
+  background: #ddd;
+  border: 1px solid #aaa;
+  flex-shrink: 0;
+  display:flex; align-items:center; justify-content:center;
+  color: #999; font-size: 11px;
+}
+.forum-meta{
+  font-size: 12.5px;
+  color: #555;
+  line-height: 1.7;
+}
+.forum-meta b{ color: #222; }
+.forum-sig{
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed #b8b4a4;
+  font-size: 13.5px;
+  font-style: italic;
+  color: #333;
+}
+
+/* ---------- cached link-page look ---------- */
+.linkpage{
+  background: #fff;
+  border: 1px solid #ddd;
+  padding: 36px 28px;
+  text-align:center;
+}
+.linkpage .handle{
+  font-size: 20px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #111;
+}
+.linkpage .subline{
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 24px;
+}
+.linkpage a.linkbtn{
+  display:block;
+  padding: 13px 0;
+  margin: 10px auto;
+  max-width: 320px;
+  background: #f5f5f5;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #111;
+  text-decoration: none;
+  font-size: 14.5px;
+}
+.linkpage a.linkbtn:hover{ background:#ececec; }
+.linkpage a.linkbtn.dead{
+  color: #aaa;
+  cursor: default;
+  pointer-events: none;
+}
+.linkpage .cache-foot{
+  margin-top: 22px;
+  font-size: 11.5px;
+  color: #aaa;
+}
+
+.capture-back{
+  display:inline-block;
+  margin-top: 24px;
+  font-size: 12.5px;
+  color: #555;
+  text-decoration: none;
+}
+.capture-back:hover{ text-decoration: underline; }
+
+h1.capture-title{
+  font-size: 16px;
+  margin: 18px 0 14px;
+  color: #222;
+}
